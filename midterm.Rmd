@@ -1,0 +1,346 @@
+---
+title: "STAT 345 Midterm Project"
+font: 12pt
+author: "Brandon Jaeger"
+date: "Due March 31"
+output:
+  html_document: default
+---
+
+```{R, echo = FALSE, warning = FALSE, message = FALSE}
+
+#Install all packages needed throughout project
+
+library(devtools)
+#devtools::install_github("abresler/nbastatR", force=TRUE)
+library(nbastatR)
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(purrr)
+library(hrbrthemes)
+```
+
+```{R, echo = FALSE, warning = FALSE, message = FALSE, results = 'hide'}
+
+#Use 'Sys.setenv()' to set environment variables in order to prevent errors within future processes
+
+  Sys.setenv("VROOM_CONNECTION_SIZE" = 131072 * 2)
+
+
+#Write a function called 'shotsByYear' to gather shot data for the Bucks from the 'nbastatR' package using 'team_shots()'.
+
+  shotsByYear <- function(x)
+                {
+                  teams_shots(teams = "Milwaukee Bucks", seasons = x)
+                }
+  
+
+#Create two vectors, one titled 'evenYears' that consists of the even years between 2000 and 2020 and the other titled 'oddYears' that consists of the odd years between 2000 and 2020.
+
+  evenYears <- c(2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016, 2018, 2020)
+  oddYears <- c(2001, 2003, 2005, 2007, 2009, 2011, 2013, 2015, 2017, 2019)
+
+
+#Use the 'shotsByYear' function as well as 'map()' to create a list of shot data for the 'evenYears' vector above and call it 'evenYearShots1'. Then use the same things to create another list of shot data for the 'oddYears' vector above and call it 'oddYearShots1'.
+
+  evenYearShots1 <- map(evenYears, shotsByYear)
+  oddYearShots1 <- map(oddYears, shotsByYear)
+  
+  #Print out the first set of data from each list to get familiar with variable names and to examine the data. To do   so remove the '#' in the beginning.
+  
+    #evenYearShots1[[1]]
+    #oddYearShots1[[1]]
+
+
+#For each list above, use 'list_rbind()' to merge the sets of shot data into one ________. Use the same names as above for each _______, just remove the '1' from the end.
+
+  evenYearShots <- list_rbind(evenYearShots1)
+  oddYearShots <- list_rbind(oddYearShots1)
+
+
+#Use 'ggplot()' and 'geom_path()' to create a graph with a basketball court layout as the background. Call it 'Court'. Lines 65 through 98, the code to do this, was found on github from a user under the name of 'edkupfer'.
+
+Court <- ggplot(data=data.frame(x=1,y=1),aes(x,y))+
+   ###outside box:
+geom_path(data=data.frame(x=c(-25,-25,25,25,-25),y=c(-47,0,0,-47,-47)))+
+   ###halfcourt line:
+geom_path(data=data.frame(x=c(-25,25),y=c(0,0)))+
+   ###halfcourt semicircle:
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=c(sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y))+
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=-c(sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y))+
+   ###solid FT semicircle above FT line:
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=c(28-sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y))+
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=-c(28-sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y))+
+   ###dashed FT semicircle below FT line:
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=c(28+sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y),linetype='dashed')+
+geom_path(data=data.frame(x=c(-6000:(-1)/1000,1:6000/1000),y=-c(28+sqrt(6^2-c(-6000:(-1)/1000,1:6000/1000)^2))),aes(x=x,y=y),linetype='dashed')+
+   ###key:
+geom_path(data=data.frame(x=c(-8,-8,8,8,-8),y=c(47,28,28,47,47)))+
+geom_path(data=data.frame(x=-c(-8,-8,8,8,-8),y=-c(47,28,28,47,47)))+
+   ###box inside the key:
+geom_path(data=data.frame(x=c(-6,-6,6,6,-6),y=c(47,28,28,47,47)))+
+geom_path(data=data.frame(x=c(-6,-6,6,6,-6),y=-c(47,28,28,47,47)))+
+   ###restricted area semicircle:
+geom_path(data=data.frame(x=c(-4000:(-1)/1000,1:4000/1000),y=c(41.25-sqrt(4^2-c(-4000:(-1)/1000,1:4000/1000)^2))),aes(x=x,y=y))+
+geom_path(data=data.frame(x=c(-4000:(-1)/1000,1:4000/1000),y=-c(41.25-sqrt(4^2-c(-4000:(-1)/1000,1:4000/1000)^2))),aes(x=x,y=y))+
+   ###rim:
+geom_path(data=data.frame(x=c(-750:(-1)/1000,1:750/1000,750:1/1000,-1:-750/1000),y=c(c(41.75+sqrt(0.75^2-c(-750:(-1)/1000,1:750/1000)^2)),c(41.75-sqrt(0.75^2-c(750:1/1000,-1:-750/1000)^2)))),aes(x=x,y=y))+
+geom_path(data=data.frame(x=c(-750:(-1)/1000,1:750/1000,750:1/1000,-1:-750/1000),y=-c(c(41.75+sqrt(0.75^2-c(-750:(-1)/1000,1:750/1000)^2)),c(41.75-sqrt(0.75^2-c(750:1/1000,-1:-750/1000)^2)))),aes(x=x,y=y))+
+   ###backboard:
+geom_path(data=data.frame(x=c(-3,3),y=c(43,43)),lineend='butt')+
+geom_path(data=data.frame(x=c(-3,3),y=-c(43,43)),lineend='butt')+
+   ###three-point line:
+geom_path(data=data.frame(x=c(-22,-22,-22000:(-1)/1000,1:22000/1000,22,22),y=c(47,47-169/12,41.75-sqrt(23.75^2-c(-22000:(-1)/1000,1:22000/1000)^2),47-169/12,47)),aes(x=x,y=y))+
+geom_path(data=data.frame(x=c(-22,-22,-22000:(-1)/1000,1:22000/1000,22,22),y=-c(47,47-169/12,41.75-sqrt(23.75^2-c(-22000:(-1)/1000,1:22000/1000)^2),47-169/12,47)),aes(x=x,y=y))+
+   ###fix aspect ratio to 1:1
+coord_fixed()
+
+
+#Create a vector of two colors that resemble the Bucks' colors to use as indicators for whether the shot was made or not. Call it 'bucksColors'.
+
+  bucksColors <- c('#00FF00', '#1E90FF')
+
+
+#Create a variable to hold the even year graphs called 'evenYearGraphs' and use the ggplot 'Court' from above to begin constructing the shot charts with the data collected earlier.
+
+  evenYearGraphs <- Court +
+    
+    #Use 'geom_point()' with the variables 'locationX' and 'locationY' from within the 'evenYearShots' ________ to       plot the shot locations on the graph. Scale the points to fit the outline of the court by dividing the               'locationX' and 'locationY' values and set the color to represent the value of the 'isShotMade' variable, also       from within the 'evenYearShots' ________. Set an alpha value in order to use opacity to clean up the various         overlapping points.  
+    
+    geom_point(alpha = 0.2, aes(locationX/10, locationY/10-43, color = isShotMade, frame = yearSeason), size = 1/2,      evenYearShots)+
+    
+    #Use 'Scale_color_manual() to set the key's title to 'Is Shot Made', set the colors to be from the 'bucksColors'     vector above, and set the key labels to be 'True = Made' and 'False = Missed'.
+    
+    scale_color_manual(name = "Is Shot Made",
+                      values = bucksColors,
+                      labels = c("True = Made", "False = Missed"))+
+    
+    #Use 'labs()' to get rid of any axis labels and to set the graphs' title as 'Bucks Shots During Even Years           Between 2000 and 2020'.
+    
+    labs(x = "", y = "", title = "Bucks Shots During Even Years Between 2000 and 2020")+
+    
+    #Use 'theme()', 'element_blank()', and 'element_text()' to eliminate any tick marks and/or text on the axis as       well as any grid lines within the background of the graph. Set the size of the key to match the size of the          graphs and adjust the size of the graphs' title, key's title, and key's labels correspondingly.
+    
+    theme(axis.text = element_blank (), axis.ticks = element_blank (), panel.grid = element_blank (),
+    legend.key.size = unit(2, 'cm'), legend.text = element_text(size = 10), title = element_text(size = 12))
+
+  
+  
+#Create a variable to hold the odd year graphs called 'oddYearGraphs' and use the ggplot 'Court' from above to begin constructing the shot charts with the data collected earlier.
+  
+  oddYearGraphs <- Court+
+    
+    #Use 'geom_point()' with the variables 'locationX' and 'locationY' from within the 'oddYearShots' ________ to        plot the shot locations on the graph. Scale the points to fit the outline of the court by dividing the               'locationX' and 'locationY' values and set the color to represent the value of the 'isShotMade' variable, also       from within the 'oddYearShots' ________. Set an alpha value in order to use opacity to clean up the various          overlapping points. 
+    
+    geom_point(alpha = 0.2, aes(locationX/10, locationY/10-43, color = isShotMade, frame = yearSeason), size = 1/2,      oddYearShots)+
+    
+    #Use 'Scale_color_manual() to set the key's title to 'Is Shot Made', set the colors to be from the 'bucksColors'     vector above, and set the key labels to be 'True = Made' and 'False = Missed'.
+    
+    scale_color_manual(name = "Is Shot Made",
+                     values = bucksColors,
+                     labels = c("True = Made", "False = Missed"))+
+    
+    #Use 'labs()' to get rid of any axis labels and to set the graphs' title as 'Bucks Shots During Odd Years            Between 2000 and 2020'.
+    
+    labs(x = "", y = "", title = "Bucks Shots During Odd Years Between 2000 and 2020")+
+    
+    #Use 'theme()', 'element_blank()', and 'element_text()' to eliminate any tick marks and/or text on the axis as       well as any grid lines within the background of the graph. Set the size of the key to match the size of the          graphs and adjust the size of the graphs' title, key's title, and key's labels correspondingly.
+    
+    theme(axis.text = element_blank (), axis.ticks = element_blank (), panel.grid = element_blank (),
+    legend.key.size = unit(2, 'cm'), legend.text = element_text(size = 10), title = element_text(size = 12))
+
+  
+#Use 'ggplotly()' with the two sets of graphs just created along with 'animation_opts()' to create an animation of the sets of graphs. Scale the size of the animation up so the points can be seen more clearly using 'width = ' and 'height = '. Set: the frame/transition speed to be 3000ms so it is not too fast, easing (which is the transition animation) to be 'cubic-in-out' as I found this one to be the smoothest and least chaotic, redraw = FALSE because if true the process would take longer than it needs to, and mode = 'next' so each frame completes its animation before the next frame starts its animation.
+#Use 'animation_slider()' to set the text 'YEAR: ' before the animation's current frame status and then set it to 'green' to match the Bucks colors. Connect to previous lines using '%>%'.
+#Set the animation for the even years to be 'evenYearsAnimation' and the animation for the odd years to be 'oddYearsAnimation'.
+  
+evenYearsAnimation <- ggplotly(evenYearGraphs, width = 750, height = 550)%>%
+  animation_opts(3000, easing = "cubic-in-out", redraw = FALSE, mode = "next") %>%
+  animation_slider(currentvalue = list(prefix = "YEAR: ", font = list(color = "green")) )
+
+oddYearsAnimation <- ggplotly(oddYearGraphs, width = 750, height = 550)%>%
+  animation_opts(3000, easing = "cubic-in-out", redraw = FALSE, mode = "next") %>%
+  animation_slider(currentvalue = list(prefix = "YEAR: ", font = list(color = "green")) )
+
+
+#Use the 'shotsByYear()' function from earlier to grab the Bucks shots from the year 2023. Call it 'bucksShots23'.
+
+bucksShots23 <- shotsByYear(2023)
+
+
+#Create a subset of 'bucksShots23' which grabs Giannis's shots by utilizing his player-id. Call it 'giannisShots'.
+
+giannisShots <- subset(bucksShots23, idPlayer == 203507)
+
+
+#Use 'ggplot()' to create a graph of giannis's shots by the range they were taken from. Call it 'gShots'.
+
+gShots <- ggplot(giannisShots, aes(zoneRange, fill = typeEvent))
+
+
+#Adjust 'gShots' with 'geom_bar()' to make it a bar graph. set position = 'dodge' to compare the makes and missed for each range side by side. Call it 'gShotGraph'.
+
+gShotGraph <- gShots+ 
+  geom_bar(position="dodge")+
+  
+  #Use 'geom_text()' to add the counts to each bar. Adjust the color, location, and size.
+  
+  geom_text(stat = 'count', position = position_dodge(.9), vjust = 1.5, color = "black", size = 3, aes(label =      ..count..))+
+  
+  #Use 'theme_modern_rc()' to change the theme of the graph to make it more aesthetically pleasing.
+  
+  theme_modern_rc()+
+  
+  #Use 'labs()' to change the axis titles as well as the title of the graph.
+  
+  labs(x = "Shot Range", y = "Number of Shots", title = "Giannis Antetokounmpo's 2023 Season Shots")+
+  
+  #Use 'scale_fill_manual()' to set the key title to be 'Shot Result' and the bar colors to match the earlier          animations.
+  
+  scale_fill_manual(name = "Shot Result", values = bucksColors)
+
+```
+
+#Click the 'play' button to start the animation. Once complete, adjust the slider to view desired years. Click and drag a box over the court to get an enlarged picture or click the '+' to zoom in.
+
+
+```{R, tidy = TRUE, echo = FALSE, warning = FALSE, message = FALSE}
+
+#Print out the animation for the even years
+
+evenYearsAnimation
+
+```
+
+
+##Findings
+
+  - Most shots are taken from the three-point line and from within the paint
+  - Shots taken from within the paint increase throughout the 20 years 
+  - Most shots taken from beyond the three-point line in 2020
+  - Most shots made from beyond the three-point line in 2020
+  - Mid-range shots decreased throughout the 20 years
+  - More shots appear to be missed than made during the earlier years
+  - Consistently accurate from the corners
+  - Most success occurs in the paint
+  
+##More In-Depth
+
+  - The coloring of the points on the graph is darker in regions where more shots are taken. Throughout the series of     graphs, the coloring is significantly darker just beyond the three-point line as well as in the paint indicating     that during these years more shots were taken in those spots of the court compared to others.
+  - For the same reason it is clear that more shots get taken from within the paint as the years go on. The points in     the paint during 2020 are significantly darker than the points in the paint during 2000 as well as the rest of       the years indicating the Bucks consistently took more shots from within the paint as time went on. The points        along the three-point line are also significantly darker than the previous years indicating the Bucks took more      three-point shots in 2020 than in the other years. Not only that but the graph for 2020 shows significantly more     blue points from beyond the three-point line than in any of the other graphs which indicates an increase in the      teams accuracy during that season.
+  - Throughout the even early 2000's the density of points within the mid-range zone was nearly identical to the         density of points throughout the rest of the court. As the years increased less points appeared in the mid-range     zone and instead appeared in the paint and along the three-point line. This indicates that the Bucks began to        drive to hoop more frequently as well as shoot three's more frequently beginning around 2010. 
+  - The majority of the graphs display more green points than blue points. The green points are the shots that are       missed so this indicates that throughout the majority of even years between 2000 and 2020 the Bucks missed more      shots than they made.
+  - However, throughout all the graphs there are darker blue spots from the corner three positions as well as from       within the paint which tells me that those were the Bucks most productive zones over the span of 20 years. 
+  
+  
+  
+  
+#Click the 'play' button to start the animation. Once complete, adjust the slider to view desired years. Click and drag a box over the court to get an enlarged picture or click the '+' to zoom in.
+  
+  
+```{R, tidy = TRUE, echo = FALSE, warning = FALSE, message = FALSE}
+
+#Print out the animation for the odd years
+
+oddYearsAnimation
+
+```
+
+
+##Findings
+
+  - Very similar to the even years
+  - Most shots are taken from the three-point line and from within the paint still
+  - Shots taken from within the paint increase throughout the 20 years.
+  - significant increase in success in the paint between 2009 and 2011
+  - Most shots taken from beyond the three-point line in 2019 and most made in 2019
+  - Mid-range shots decreased throughout the 20 years still
+  - Most consistently successful region is the paint
+  - More shots appear to be missed than made
+  - Within the half circle at the free-throw line, consistently success in its center and much less success around       its sides
+  - Half-court+ shots are rarely made
+  
+##More In-Depth
+
+  - Just like the even years,the coloring of the points on the graph is darker in regions where more shots are taken.     Throughout the series of graphs, the coloring is significantly darker just beyond the three-point line as well as     in the paint indicating that during these years more shots were taken in those spots of the court compared to        others.
+  - For the same reason it is clear that more shots get taken from within the paint as the years go on. The points in     the paint during 2019 are significantly darker than the points in the paint during 2001 as well as the rest of       the years indicating more shots came from that spot of the court in 2019 than in 2001 or any of the other years.     The points along the three-point line are also significantly darker than the previous years indicating the Bucks     took more three-point shots in 2019 than in the other years.
+  - Throughout the odd early 2000's the density of points within the mid-range zone was nearly identical to the          density of points throughout the rest of the court. As the years increased less points appeared in the mid-range     zone and instead appeared in the paint and along the three-point line just like the even years. This indicates       that the Bucks began to drive to hoop more frequently as well as shoot three's more frequently beginning around      2011. 
+  - Throughout most of the years the graphs have an overall larger amount of green points especially during the          earlier years. The green points are the shots that are missed so this indicates that throughout the odd years of     a 20 year span the Bucks missed more shots than they made. 
+  - Bucks consistently successful from the top center point of the half circle as there are consistently a good          number of blue points there but green points tend to control the rest of that half circle.
+  - Nearly all of the points located at half-court and beyond are green but no surprise there.
+  - Most of the years have a darker blue region in the paint indicating frequent success there throughout the years.   - Given the lack of consistent blue points beyond the three-point line it seems to be clear that over the past 20      years the Bucks have been better at lay-ups than three's.
+  
+  
+  
+  
+```{R, tidy = TRUE, echo = FALSE, warning = FALSE, message = FALSE}
+
+#Print out the graph for Giannis's 2023 shots.
+
+gShotGraph
+
+```
+
+
+##Graph Summary
+
+ - Graph focuses only on Giannis's shots during the 2023 year and splits those up based on what range each shot was     taken from. This comes from the 'zoneRange' variable. Another new variable used was 'typeEvent' which indicates      whether he made the shot or missed the shot. This variable allowed the misses and makes for each range to be         compared to each other side by side.
+ - From the graph we learn that Giannis took the most shots from less than 8 feet away from the hoop and the least      amount of shots from between 16 and 24 feet away from the hoop. The graph also shows that Giannis had the most       success within 8 feet from the hoop and the least success between 16 and 24 feet aways from the hoop. Furthermore,    the graph shows Giannis took almost the same amount of shots from the 24+ feet range as he did from the 8 to 16      feet range. Not only that but between the two ranges he made nearly the exact same number of shots. Graph also       shows Giannis misses more shots than he makes in every range except for the less than 8 feet range. 
+ 
+ 
+ 
+```{R, eval = FALSE, echo = FALSE} 
+
+## The Background
+
+Your role for the midterm project is that of data analyst intern at an NBA (professional basketball) team. Your direct supervisor (also part of the analytics team) has asked you to create a data visualization to illustrate how (or if) the team's shots have changed over time. After some initial clarifying questions, your supervisor confessed that they had seen some pretty cool shot charts at http://savvastjortjoglou.com/nba-shot-sharts.html and would like to extend the ideas a bit. 
+
+Your data for the midterm project may come from a variety of sources, including the NBA directly, as well as Basketball-Reference, HoopsHype, and others. There are several ways to access the data, but perhaps the simplest is through the `nbastatR` package, which serves as a wrapper (or set of helper functions) for these various data sources. There is a lot of potentially useful information that can be found using this package; unfortunately, the documentation is somewhat inconsistent. For example, the documentation at https://www.rdocumentation.org/packages/nbastatR/versions/0.1.110202031 is pretty well-formatted and easy to navigate, but the current function names have changed a bit (see `?nbastatR` and click "Index"). (If you use the nbastatR package, you'll want to install the package using the following code. There are other packages with this type of data, though.)
+
+## The Tasks
+
+1. (30 points) Produce a graphic displaying the shot locations for a particular team over several years. Some notes:
+
+   - Colors should be chosen to reflect the team, if possible.
+   - There are likely many overlaid points -- handle this by either binning these by location, or use opacity.
+   - Incorporate information about whether the shot was made or not (shape, color, etc.).
+   - The graphic should be well-labeled, titled, etc.
+   - Start with a graph for a single year, then extend to several years. Up to 20 years of shot data is available. Either facet these by year or animate using the years.
+   - You'll want to figure out what the coordinates mean somehow. This might be through the documentation, but could also be determined using aspects of the data itself and the dimensions of an NBA court.
+    - If possible, try to put a basketball court on the background of the image (you'll need to scale it appropriately).
+  
+2. (30 points) Summarize the graphic/series of graphics into a digestible, bullet-point brief report for front-office staff. Some notes:
+
+   - The main body of the report should be very brief -- just the graphic(s) and the bullet-pointed list of findings, which should be short and clear.
+   - Include a more detailed explanation of these bullet points, for further reading by those interested. This section should follow the bullet-point section, but should be organized similarly for reference. 
+   - Your report to the front-office shouldn't include any code.
+   - This report should be generated using RMarkdown. However, the choice of output type (Word, PDF, or HTML) is up to you (you could even make slides if you want to). 
+   
+3. (30 points) Write and document clean, efficient, reproducible code. Some notes:
+
+   - This code will be viewed by your direct supervisor.
+   - The code file should include your code to gather, join, and clean the data; the code to generate the graphic(s) presented; and your commentary on the results (so, a single .rmd file, or an .rmd file that sources an .r file).
+   - Your code should be clean, organized, and reproducible. Remove unnecessary/scratch/exploratory code.
+   - Your code should be well commented. In particular, any decisions or judgement calls made in the analysis process should be explained/justified. Sections of code should be identified even if not functionalized (including purpose, data/argument inputs, analysis outputs).
+   
+4. (10 points) Above and Beyond. Explore the data a bit, and create a graphic that uses (or incorporates) different information than what was used above. Some notes:
+
+   - Create an additional graphic that incorporates at least one additional variable not previously used. The additional data should be drawn from a different dataset (function call) than the original graphic used. These two (or more) datasets may need to be joined appropriately.
+   - You can either add more information to the plot above, or create a different plot. 
+   - Formatting, labelling, etc. are all important here too.
+   - Adding marginal densities or other "bells and whistles" might offer additional insight.
+   - This graphic should be included at the end of the report (after the more detailed explanations). 
+   - You should include a brief description of the graphic (highlighting the different/additional information used).
+
+  
+## The Deliverables
+
+1. Upload your report and code file(s) to GitHub by 11:59am (noon) on Friday, March 31.
+2. Submit (on Canvas) your report, code, and link to your GitHub repository by 11:59am (noon) on Friday, March 31.
+  
+``` 
+  
+  
+
+
